@@ -384,7 +384,7 @@ def _chain_async_model_call_handlers(
     return composed_handler
 
 
-def _resolve_schema(schemas: set[type], schema_name: str, omit_flag: str | None = None) -> type:
+def _resolve_schema(schemas: list[type], schema_name: str, omit_flag: str | None = None) -> type:
     """Resolve schema by merging schemas and optionally respecting `OmitFromSchema` annotations.
 
     Args:
@@ -970,10 +970,9 @@ def create_agent(
         async_handlers = [m.awrap_model_call for m in middleware_w_awrap_model_call]
         awrap_model_call_handler = _chain_async_model_call_handlers(async_handlers)
 
-    state_schemas: set[type] = {m.state_schema for m in middleware}
     # Use provided state_schema if available, otherwise use base AgentState
     base_state = state_schema if state_schema is not None else AgentState
-    state_schemas.add(base_state)
+    state_schemas = list(dict.fromkeys([base_state] + [m.state_schema for m in middleware]))
 
     resolved_state_schema = _resolve_schema(state_schemas, "StateSchema", None)
     input_schema = _resolve_schema(state_schemas, "InputSchema", "input")
